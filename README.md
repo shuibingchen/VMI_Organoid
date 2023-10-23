@@ -1,4 +1,4 @@
-# Vascularized Macrophage-Islet Organoids to Model Immune-Mediated Pancreatic $\\beta$ cell Pyroptosis upon Viral Infection
+# Vascularized Macrophage-Islet Organoids to Model Immune-Mediated Pancreatic $$\beta$$ cell Pyroptosis upon Viral Infection
 
 This repository contains the R scripts necessary to perform the analysis in our
 manuscript *Liuliu Yang et al.* "Vascularized Macrophage-Islet Organoids to Model
