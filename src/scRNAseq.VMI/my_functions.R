@@ -73,3 +73,80 @@ my.MergeMatrix.v2 <- function(tmats){
   return(tmerged)
 }
 
+# function to compare pre-defined two groups of cells
+# select top DE genes and make volcano plot
+my.DE.pair <- function(tobj, cdtA, cdtB, ntop, nCells, ttitle, no.mito=TRUE, mincells=10,
+                       min.pct=0.1, logfc.threshold=0.1, test.use='wilcox',
+                       cut.padj=0.1, cut.avglogfc=0,
+                       cutFC=0.6, cutP=20, tfigdir, tinfodir, tsvg=FALSE){
+  # check number of cells in each condition
+  nA <- as.numeric(nCells %>% filter(ident==cdtA) %>% dplyr::select(n))
+  nB <- as.numeric(nCells %>% filter(ident==cdtB) %>% dplyr::select(n))
+  print(paste0('Compare ',cdtA,' (',nA,' cells)',' to ',cdtB, ' (',nB,' cells).'))
+  # enough cells?
+  if (nA < mincells | nB < mincells){
+    print('Too few cells to perform DE.')
+    return(NULL)
+  }
+  # run DE
+  de.results <- FindMarkers(tobj, ident.1=cdtA, ident.2=cdtB, min.pct=min.pct, logfc.threshold=logfc.threshold, test.use=test.use)
+  # write to file
+  out.file.prefix <- paste('DE',cdtA,'vs',cdtB,paste0('mincells_',mincells),
+                           test.use,paste0('min_pct_',min.pct),paste0('logfc_',logfc.threshold), sep='.')
+  de.file <- file.path(tinfodir, paste(out.file.prefix, 'txt', sep='.'))
+  write.table(de.results, de.file, quote=F, sep='\t', col.names=NA)
+  # select top 10 up/down genes to label in the plot
+  up.genes <- rownames(subset(de.results, p_val_adj < cut.padj & avg_log2FC > cut.avglogfc))
+  down.genes <- rownames(subset(de.results, p_val_adj < cut.padj & avg_log2FC < -cut.avglogfc))
+  top.up.genes <- head(up.genes, ntop)
+  top.down.genes <- head(down.genes, ntop)
+  # ignore mitochondiral genes?
+  if (no.mito){
+    top.up.genes <- head(grep(mito.pattern, up.genes, value=T, invert=T), ntop)
+    top.down.genes <- head(grep(mito.pattern, down.genes, value=T, invert=T), ntop)
+  }
+  # make volcano plot
+  g <- myVolcanoPlot(de.file, tx='p_val_adj', ty='avg_log2FC', tcutFC=cutFC, tcutP=cutP, tlabel.genes.up=top.up.genes, tlabel.genes.down=top.down.genes,
+                     txlabel='LogFoldChange', tylabel='-LogP-value', tupper=300, talpha=0.8,
+                     tcolor.up='firebrick3', tcolor.down='steelblue3', tcolor.other='gray60')
+  g <- g + ggtitle(ttitle) + theme(plot.title=element_text(color='black',face='bold',size=20,hjust=0.5))
+  ggsave(file.path(tfigdir,paste('Volcano',out.file.prefix,'png',sep='.')), plot=g, width=8, height=7, dpi=300)
+  if (tsvg){
+    ggsave(file.path(tfigdir,paste('Volcano',out.file.prefix,'svg',sep='.')), plot=g, width=8, height=7)
+  }
+  return(de.results)
+}
+
+# make volcano plot on a set of DE genes
+myVolcanoPlot <- function(tdefile, tx='p_val', ty='avg_logFC', tcutFC=0.25, tcutP=20, tlabel.genes.up=NULL, tlabel.genes.down=NULL, txlabel='LogFoldChange', tylabel='-LogP-value', tupper=300, talpha=0.8, tcolor.up='firebrick3', tcolor.down='steelblue3', tcolor.other='gray60'){
+  # read in DE results
+  tde <- read.table(tdefile, sep='\t', header=T, check.names=F, stringsAsFactors=F, row.names=1)
+  # arrange data
+  tdataToPlot <- tde[,c(tx,ty)]
+  tdataToPlot$gene <- rownames(tde)
+  colnames(tdataToPlot) <- c('pval','logFC','gene')
+  # log transform p-value
+  tdataToPlot$logPval <- -log10(tdataToPlot$pval)
+  # label and color
+  if (is.null(tlabel.genes.up) | is.null(tlabel.genes.down)){
+    tdataToPlot$color <- with(tdataToPlot, ifelse(logPval > tcutP & logFC > tcutFC, 'up', ifelse(logPval > tcutP & logFC < -tcutFC, 'down', 'other')))
+    tdataToPlot$label <- with(tdataToPlot, ifelse(color %in% c('up','down'), gene, ''))
+  } else{
+    tdataToPlot$color <- with(tdataToPlot, ifelse(gene %in% tlabel.genes.up, 'up', ifelse(gene %in% tlabel.genes.down, 'down', 'other')))
+    tdataToPlot$label <- with(tdataToPlot, ifelse(gene %in% c(tlabel.genes.up, tlabel.genes.down), gene, ''))
+  }
+  # any 0 p-values thus Inf logPval? modify to the upperlimit
+  tdataToPlot$logPval[tdataToPlot$logPval > tupper] <- tupper
+  # plot
+  tg <- ggplot(tdataToPlot, aes(x=logFC, y=logPval, color=color, label=label))
+  tg <- tg + geom_point(shape=19, size=2, alpha=talpha)
+  tg <- tg + scale_color_manual(values=c('up'=tcolor.up,'down'=tcolor.down, 'other'=tcolor.other))
+  tg <- tg + geom_text_repel()
+  #tg <- tg + geom_vline(xintercept=tcutFC, linetype='dotted', color='gray75') + geom_vline(xintercept=-tcutFC, linetype='dotted', color='gray75')
+  #tg <- tg + geom_hline(yintercept=tcutP, linetype="dotted", color="gray75")
+  tg <- tg + xlab(txlabel) + ylab(tylabel)
+  tg <- tg + theme_classic()
+  tg <- tg + theme(legend.position='none')
+  tg <- tg + theme(axis.title=element_text(size=18, color='black'), axis.text=element_text(size=16, color='black'))
+  return(tg)
+}
