@@ -124,4 +124,29 @@ myDimPlot3 <- function(tobj, treduct, tgroup_by, tgroup_order=NULL, thighlight=N
   return(tg)
 }
 
+# Coverage plot on beta cells between conditions
+my.coverage.plot.beta.cmp <- function(tgene, cdt=c('BM0','BM1'), tsuffix='BM1_vs_BM0', 
+                                      up=1000, down=1000, include.tile=T){
+    # subset cells
+    clean.cells <- rownames(FetchData(panc.integrated, vars=c('predicted.id','Name')) %>% 
+                            dplyr::filter(predicted.id == 0 & Name %in% cdt))
+    print(paste(length(clean.cells),'cells.'))
+    # subset seurat object
+    tobj = subset(panc.integrated, cells=clean.cells)
+    # plot
+    # no tile
+    p1 <- CoveragePlot(object=tobj, region=tgene, 
+                       group.by='Name', 
+                       extend.upstream=up, extend.downstream=down)
+    # include tile
+    p2 <- CoveragePlot(object=tobj, region=tgene, 
+                       group.by='Name', 
+                       extend.upstream=up, extend.downstream=down, 
+                       annotation=TRUE, peaks=TRUE, tile=TRUE)
+    if (include.tile){
+    	return(p2)
+    } else {
+    	return(p1)
+    }
+}
 

@@ -7,6 +7,7 @@ library(dplyr, quietly=T, warn.conflicts=F)
 library(ggplot2, quietly=T, warn.conflicts=F)
 library(Matrix, quietly=T, warn.conflicts=F)
 #library(scater, quietly=T, warn.conflicts=F)
+library(CellChat, quietly=T, warn.conflicts=F)
 library(reshape2, quietly=T, warn.conflicts=F)
 library(pheatmap, quietly=T, warn.conflicts=F)
 library(magrittr, quietly=T, warn.conflicts=F)
@@ -150,3 +151,71 @@ myVolcanoPlot <- function(tdefile, tx='p_val', ty='avg_logFC', tcutFC=0.25, tcut
   tg <- tg + theme(axis.title=element_text(size=18, color='black'), axis.text=element_text(size=16, color='black'))
   return(tg)
 }
+
+# pre-processing cells in a particular group
+my.preprocessing.cellchat <- function(seurat.obj, sample.use, clusters.use, metadata, group.by='labels',
+                                      CellChatDB.use=CellChatDB.use, population.size=TRUE, infodir=infodir, 
+                                      suffix='', sources.use = c(3,7), targets.use = c(3,7), workers=4){
+  # define cells used for running CellChat
+  tcell.use <- rownames(subset(FetchData(seurat.obj, vars=c('ident', 'Name')), 
+                               Name %in% sample.use & ident %in% clusters.use))
+  
+  # prepare input data for running CellChat
+  tdata.input <- seurat.obj[['RNA']]@data[, tcell.use]
+  tmeta <- metadata[tcell.use, , drop=F]
+  
+  # create a CellChat object
+  cellchat <- createCellChat(object=tdata.input, meta=tmeta, group.by=group.by)
+  print(cellchat)
+  
+  # set the used database in the object
+  cellchat@DB <- CellChatDB.use
+  
+  # Preprocessing the expression data for cell-cell communication analysis
+  # subset the expression data of signaling genes for saving computation cost
+  print('subsetData')
+  cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+
+  print('identifyOverExpressedGenes')
+  cellchat <- identifyOverExpressedGenes(cellchat)
+  print('identifyOverExpressedInteractions')
+  cellchat <- identifyOverExpressedInteractions(cellchat)
+  
+  # project gene expression data onto PPI (Optional: when running it, USER should set `raw.use = FALSE` in the function `computeCommunProb()` in order to use the projected data)
+  # cellchat <- projectData(cellchat, PPI.human)
+  
+  # Compute the communication probability and infer cellular communication network
+  print('computeCommunProb')
+  cellchat <- computeCommunProb(cellchat, population.size=population.size)
+  # Filter out the cell-cell communication if there are only few number of cells in certain cell groups
+  cellchat <- filterCommunication(cellchat, min.cells = 10)
+  
+  # Extract the inferred cellular communication network as a data frame
+  df.net <- subsetCommunication(cellchat)
+  write.table(df.net, file=file.path(infodir, paste('cell-cell.communication',suffix,'all.txt',sep='.')), quote=F, sep='\t', row.names=F)
+  
+  # interactions between beta and macrophage
+  print(subsetCommunication(cellchat, sources.use = sources.use, targets.use = targets.use))
+  
+  # Infer the cell-cell communication at a signaling pathway level
+  # CellChat computes the communication probability on signaling pathway level by summarizing the communication probabilities of all ligands-receptors interactions associated with each signaling pathway.
+  # NB: The inferred intercellular communication network of each ligand-receptor pair and each signaling pathway is stored in the slot ‘net’ and ‘netP’, respectively.
+  print('computeCommunProbPathway')
+  cellchat <- computeCommunProbPathway(cellchat)
+  
+  # Calculate the aggregated cell-cell communication network
+  print('aggregateNet')
+  cellchat <- aggregateNet(cellchat)
+  
+  # Compute the network centrality scores
+  print('netAnalysis_computeCentrality')
+  future::plan("sequential")
+  cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP")
+  future::plan("multicore", workers = workers)
+  
+  # save CellChat object
+  saveRDS(cellchat, file.path(infodir, paste('cellchat',suffix,'rds',sep='.')))
+  
+  return(cellchat)
+}
+

@@ -1,4 +1,4 @@
-# step5.generate_plots.R
+# step_5.generate_plots.R
 # --- process scRNAseq data from islets samples ---
 # step 5: Generate plots in the manuscript
 # Author: Tuo Zhang
@@ -125,3 +125,18 @@ p2 <- p2 + ggtitle('BM0 - ATAC')
 
 g <- p1 | p2
 ggsave(file.path(figdir, 'Fig.4D.png'), plot=g, width=9.5, height=4.5, dpi=300)
+
+# Figure 4G: Chromatin accessibility signals of SLC2A1, INS, PDX1 in the β cell cluster of VMI organoids at day 7 after reaggregation and separately cultured cells as analyzed by snATAC-seq. 
+# 1. SLC2A1
+plot <- my.coverage.plot.beta.cmp(tgene='SLC2A1', cdt=c('BUC','BM0'), tsuffix='BM0_vs_BUC', 
+    up=2000, down=2000, include.tile=T)
+ggsave(file.path(figdir, 'Fig.4D.SLC2A1.png'), plot=g, width=5, height=5, dpi=300)
+# 2. INS
+plot <- my.coverage.plot.beta.cmp(tgene='INS', cdt=c('BUC','BM0'), tsuffix='BM0_vs_BUC', 
+    up=2000, down=2000, include.tile=T)
+ggsave(file.path(figdir, 'Fig.4D.INS.png'), plot=g, width=5, height=5, dpi=300)
+# 3. PDX1
+plot <- my.coverage.plot.beta.cmp(tgene='PDX1', cdt=c('BUC','BM0'), tsuffix='BM0_vs_BUC', 
+    up=2000, down=2000, include.tile=T)
+ggsave(file.path(figdir, 'Fig.4D.PDX1.png'), plot=g, width=5, height=5, dpi=300)
+
