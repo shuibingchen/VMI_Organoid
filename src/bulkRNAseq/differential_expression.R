@@ -1,4 +1,5 @@
 # differential_expression.R
+# --- process bulk RNAseq data from hESC-derived macrophage samples ---
 # perform differential analysis on bulk RNA-seq samples using DESeq2
 # Author: Tuo Zhang
 # Date: 8/1/2024
@@ -30,15 +31,12 @@ countData <- read.table(file=countsfile, header=TRUE, check.names=FALSE)
 rownames(countData) <- countData[,1]
 countData <- countData[,-1]
 
-#M1-1    M1-2    M1-3    M0-1    M0-2    M0-3
-
 # create experimental label
 colData <- data.frame(condition=factor(c(rep("M1",3),rep("M0",3))))
 rownames(colData) <- colnames(countData)
 
 # construct a DESeqDataSet
 dds <- DESeqDataSetFromMatrix(countData=countData, colData=colData, design=~condition)
-dds
 
 # update factor levels
 dds$condition <- factor(dds$condition, levels=c("M0","M1"))
@@ -51,15 +49,9 @@ res <- results(dds, contrast=c("condition", 'M0', 'M1'), alpha=alpha, parallel=T
 
 # shrink log2 fold change values
 resLFC <- lfcShrink(dds, res=res, type="ashr", parallel=TRUE, BPPARAM=MulticoreParam(4))
-			
+
 # reorder results by adjusted-pvalue
 resLFCOrdered <- resLFC[order(resLFC$padj),]
-
-# make MA-plot
-png(file=paste(figdir, paste("MA-plot", allconditions[i], "vs", allconditions[j], "LFC", "png", sep="."), sep="/"), width = 1920, height = 1920, units = "px", pointsize = 6, res=600)
-plotMA(resLFC, main=paste(allconditions[i], "vs", allconditions[j], sep=" "))
-abline(h=c(-1,1), col="dodgerblue", lwd=2)
-dev.off()
 
 # exporting results to file
 write.table(as.data.frame(resLFCOrdered), file=file.path(numdir, "DE.M1.vs.M0.LFC.tsv"), quote=FALSE, sep='\t', col.names=NA)
@@ -81,12 +73,7 @@ percentVar <- round(100*attr(mypcadata, "percentVar"))
 g <- ggplot(mypcadata, aes(PC1, PC2, color=condition, label=name))
 g <- g + geom_point(size=3, shape=19) + xlab(paste0("PC1: ", percentVar[1], "% variance")) + ylab(paste0("PC2: ", percentVar[2], "% variance"))
 g <- g + theme_classic()
-ggsave(file=paste(figdir, "PCA.rld.v2.png", sep="/"), width = 8, height = 6, type = "cairo", dpi = 600)
-
-g <- ggplot(mypcadata, aes(PC1, PC2, color=condition, label=name))
-g <- g + geom_text() + xlab(paste0("PC1: ", percentVar[1], "% variance")) + ylab(paste0("PC2: ", percentVar[2], "% variance"))
-g <- g + theme_classic()
-ggsave(file=paste(figdir, "PCA.rld.v2.labeled.png", sep="/"), width = 8, height = 6, type = "cairo", dpi = 600)
+ggsave(file=paste(figdir, "PCA.rld.png", sep="/"), width = 8, height = 6, type = "cairo", dpi = 600)
 
 # regularized log transformation
 write.table(as.data.frame(assay(rld)), file=paste(numdir, "details_rld.tsv", sep="/"), quote=FALSE, sep='\t', col.names=NA)

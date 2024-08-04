@@ -80,13 +80,17 @@ ggsave(file.path(figdir, "Fig.4A.png"),
        plot=plot, width=8.5, height=4, dpi=300)
 
 # Figure 4C: Individual UMAP of scRNA-seq and snATAC-seq analysis of VMI organoids
-plot <- myDimPlot3(tobj=coembed.v4, treduct="umap", 
+cells.BUC.BM0 <- FetchData(coembed.v4, vars=c('Name')) %>% rownames_to_column('cellID') %>%
+    dplyr::filter(Name %in% c('RNA_BUC','RNA_BM0','ATAC_BUC','ATAC_BM0')) %>% 
+    pull('cellID')
+
+plot <- myDimPlot3(tobj=subset(coembed.v4, cells=cells.BUC.BMO), treduct="umap", 
                    tgroup_by="transfer.cluster", tgroup_order=paste0('C',0:8), tsuffix="Cluster", 
                    tcolor=my.cluster.color, tsplit_by='Name', 
-                   tsplit_order=c(paste('ATAC', c('BUC','BM0','BM1'), sep='_'), 
-                                  paste('RNA', c('BUC','BM0','BM1'), sep='_')), 
+                   tsplit_order=c(paste('ATAC', c('BUC','BM0'), sep='_'), 
+                                  paste('RNA', c('BUC','BM0'), sep='_')), 
                    tlabel=T, tncol=3, tptsize=0.4, tlbsize=3.5) + theme(legend.position="none")
-ggsave(file.path(figdir, "Fig.4C.png"), plot=plot, width=12.5, height=8, dpi=300)
+ggsave(file.path(figdir, "Fig.4C.png"), plot=plot, width=8.5, height=8, dpi=300)
 
 # Figure 4D: Pie chart showed the relative percentages of each cell types in VMI organoids
 stat.RNA_BM0 <- FetchData(coembed.v4, vars=c('Name','transfer.cluster')) %>% 
@@ -133,10 +137,41 @@ plot <- my.coverage.plot.beta.cmp(tgene='SLC2A1', cdt=c('BUC','BM0'), tsuffix='B
 ggsave(file.path(figdir, 'Fig.4D.SLC2A1.png'), plot=g, width=5, height=5, dpi=300)
 # 2. INS
 plot <- my.coverage.plot.beta.cmp(tgene='INS', cdt=c('BUC','BM0'), tsuffix='BM0_vs_BUC', 
-    up=2000, down=2000, include.tile=T)
+    up=25000, down=25000, include.tile=T)
 ggsave(file.path(figdir, 'Fig.4D.INS.png'), plot=g, width=5, height=5, dpi=300)
 # 3. PDX1
 plot <- my.coverage.plot.beta.cmp(tgene='PDX1', cdt=c('BUC','BM0'), tsuffix='BM0_vs_BUC', 
-    up=2000, down=2000, include.tile=T)
+    up=15000, down=5000, include.tile=T)
 ggsave(file.path(figdir, 'Fig.4D.PDX1.png'), plot=g, width=5, height=5, dpi=300)
+
+# Figure 5D: Integrative UMAP of VMI organoids at day 7 after reaggregation containing unstimulated or proinflammatory macrophages.
+cells.BM0.BM1 <- FetchData(coembed.v4, vars=c('Name')) %>% rownames_to_column('cellID') %>%
+    dplyr::filter(Name %in% c('RNA_BM0','RNA_BM1','ATAC_BM0','ATAC_BM1')) %>% 
+    pull('cellID')
+
+plot <- myDimPlot3(tobj=subset(coembed.v4, cells=cells.BM0.BM1), treduct="umap", 
+                   tgroup_by="transfer.cluster", tgroup_order=paste0('C',0:8), tsuffix="Cluster", 
+                   tcolor=my.cluster.color, tsplit_by='Name', 
+                   tsplit_order=c(paste('ATAC', c('BM0','BM1'), sep='_'), 
+                                  paste('RNA', c('BM0','BM1'), sep='_')), 
+                   tlabel=T, tncol=3, tptsize=0.4, tlbsize=3.5) + theme(legend.position="none")
+ggsave(file.path(figdir, "Fig.5D.png"), plot=plot, width=8.5, height=8, dpi=300)
+
+# Figure 5I: Chromatin accessibility signals of CASP1, CASP9, IL1B and NLRP3 in the β cell cluster of VMI organoids at day 7 after reaggregation containing unstimulated or proinflammatory macrophages.
+# 1. CASP1
+plot <- my.coverage.plot.beta.cmp(tgene='CASP1', cdt=c('BM0','BM1'), tsuffix='BM1_vs_BM0', 
+    up=2000, down=2000, width=5, height=2.5, include.tile=T)
+ggsave(file.path(figdir, 'Fig.5I.CASP1.png'), plot=g, width=5, height=2.5, dpi=300)
+# CASP9
+plot <- my.coverage.plot.beta.cmp(tgene='CASP9', cdt=c('BM0','BM1'), tsuffix='BM1_vs_BM0', 
+    up=-10000, down=-15000, width=5, height=2.5, include.tile=T)
+ggsave(file.path(figdir, 'Fig.5I.CASP9.png'), plot=g, width=5, height=2.5, dpi=300)
+# IL1B
+plot <- my.coverage.plot.beta.cmp(tgene='IL1B', cdt=c('BM0','BM1'), tsuffix='BM1_vs_BM0', 
+    up=2000, down=5000, width=5, height=2.5, include.tile=T)
+ggsave(file.path(figdir, 'Fig.5I.IL1B.png'), plot=g, width=5, height=2.5, dpi=300)
+# NLRP3
+plot <- my.coverage.plot.beta.cmp(tgene='NLRP3', cdt=c('BM0','BM1'), tsuffix='BM1_vs_BM0', 
+    up=10000, down=2000, width=5, height=2.5, include.tile=T)
+ggsave(file.path(figdir, 'Fig.5I.NLRP3.png'), plot=g, width=5, height=2.5, dpi=300)
 

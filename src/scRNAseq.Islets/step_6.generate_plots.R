@@ -1,6 +1,6 @@
-# step_6.generate_plots.R
+# step_8.generate_plots.R
 # --- process scRNAseq data from islets samples ---
-# step 6: generate plots in the manuscript
+# step 8: generate plots in the manuscript
 # Author: Tuo Zhang
 # Date: 8/1/2024
 # 
@@ -17,6 +17,7 @@ library(ggrepel)
 library(tibble)
 library(tidyr)
 library(RColorBrewer)
+library(CellChat)
 
 # folders
 workdir <- "."
@@ -143,3 +144,78 @@ for (tgene in immune.markers){
                       tcolor=my.immune.cluster.color, tcells=NULL, tassay="RNA", tncol=1)
   ggsave(file.path(figdir, "Fig.2B-2.png"), plot=plot, height=4, width=6, dpi=300)
 }
+
+# Figure 2C: Dot plot analysis of proinflammatory macrophage-associated genes in macrophages of human islets exposed to mock or SARS-CoV-2 (MOI=1). 
+m1.macrophage.markers <- c('IL1B','IL6','CXCL8','TNF','CCL2','CXCL10','IDO1','CD80')
+
+macrophage.Mock.COV2.cells <- rownames(subset(FetchData(panc.immune, vars=c('ident','Name')), 
+                                              ident %in% c(0) & Name %in% c('control-9-mock','control-9-SARS-CoV-2','control-10-mock','control-10-SARS-CoV-2',
+                                                'control-11-mock','control-11-SARS-CoV-2')))
+plot <- DotPlot.2(subset(panc.immune, cells=macrophage.Mock.COV2.cells), assay='RNA', features=m1.macrophage.markers, 
+                  cols="RdBu", group.by='Condition', order.ids=c('Mock','COV2')) + 
+  theme_bw() + coord_flip() + theme(axis.text.x=element_text(angle=60, hjust=1))
+ggsave(file.path(figdir, "Fig.2C.png"), plot=plot, width=3.5, height=4.5, dpi=300)
+
+# Figure 2G: Dot plot analysis of pyroptosis associated genes in the β cell cluster of human islets exposed to mock or SARS-CoV-2 (MOI=1).
+gene.set.cov2 <- c("GSDME","GSDMD","CASP1","CASP8","NLRP3","IL18","CASP9","PYCARD","STS")
+
+beta.cells <- rownames(subset(FetchData(panc, vars=c('ident')), ident %in% c(0)))
+
+cov2.cells <- FetchData(panc, vars=c('Name')) %>% rownames_to_column('cellID') %>% 
+  dplyr::filter(Name %in% c('control-9-mock','control-9-SARS-CoV-2','control-10-mock','control-10-SARS-CoV-2','control-11-mock','control-11-SARS-CoV-2')) %>% pull('cellID')
+
+plot <- DotPlot.2(subset(panc, cells=intersect(beta.cells, cov2.cells)), assay='RNA', features=gene.set.cov2, cols="RdBu", group.by='Condition', 
+                  order.ids=c('Mock','COV2')) + 
+  theme_bw() + coord_flip() + theme(axis.text.x=element_text(angle=60, hjust=1))
+ggsave(file.path(figdir, "Fig.2G.png"), plot=plot, width=3.5, height=4.5, dpi=300)
+
+# Figure 2J: Dot plot analysis of proinflammatory macrophage-associated genes in the macrophage cluster of human islets exposed to mock or CVB4 
+macrophage.Mock.CVB4.cells <- rownames(subset(FetchData(panc.immune, vars=c('ident','Name')), 
+                                              ident %in% c(0) & Name %in% c('control-10-mock','control-10-CVB4','control-12-mock','control-12-CVB4-1','control-12-CVB4-2')))
+
+plot <- DotPlot.2(subset(panc.immune, cells=macrophage.Mock.CVB4.cells), assay='RNA', features=m1.macrophage.markers, 
+                  cols="RdBu", group.by='Condition', order.ids=c('Mock','CVB4')) + 
+  theme_bw() + coord_flip() + theme(axis.text.x=element_text(angle=60, hjust=1))
+ggsave(file.path(figdir, "Fig.2J.png",sep="."), plot=plot, width=3.5, height=4.5, dpi=300)
+
+# Figure 2M: Dot plot analysis of pyroptosis pathway associated genes in the β cell cluster of human islets exposed to mock or CVB4 (2x106 PFU/ml).
+gene.set.cvb4 <- c("GSDME","CASP1","NLRP3","IL1B","CASP9")
+
+cvb4.cells <- FetchData(panc, vars=c('Name')) %>% rownames_to_column('cellID') %>% 
+  dplyr::filter(Name %in% c('control-10-mock','control-10-CVB4','control-12-mock','control-12-CVB4-1','control-12-CVB4-2')) %>% pull('cellID')
+
+plot <- DotPlot.2(subset(panc, cells=intersect(beta.cells, cvb4.cells)), assay='RNA', features=gene.set.cvb4, cols="RdBu", group.by='Condition', 
+                  order.ids=c('Mock','CVB4')) + 
+  theme_bw() + coord_flip() + theme(axis.text.x=element_text(angle=60, hjust=1))
+ggsave(file.path(figdir, "Fig.2M.png"), plot=plot, width=3.5, height=3, dpi=300)
+
+# Figure 2F: Pathway enrichment analysis of cell death pathways in β cell cluster of human islets exposed to mock or SARS-CoV-2 (MOI=1).
+plot <- my.custom.bar.plot(infodir, suffix='DE.CoV2+.vs.Mock.beta_cells.mincells_10.wilcox')
+ggsave(file.path(figdir, 'Fig.2F.png',sep='.'), width=6.5, height=5, dpi=300)
+
+# Figure 6C: Dot plot analysis of the expression level of TNFSF12 in the macrophage cluster of human islets exposed to mock or SARS-CoV-2 virus (MOI=1).
+# Load Seurat object with combined immune sub-cluster labels
+panc.combined_labels <- readRDS(file.path(infodir,'panc.combined_labels.rds'))
+
+# subset beta + macrophage cell clusters
+tcells <- rownames(FetchData(panc.combined_labels, vars=c('ident','Name')) %>% 
+  dplyr::filter(Name %in% c('control-9-mock','control-9-SARS-CoV-2','control-10-mock','control-10-SARS-CoV-2','control-11-mock','control-11-SARS-CoV-2')) %>% 
+  dplyr::filter (ident %in% c(0,8)))
+
+panc.cov2.bm <- subset(panc, cells=tcells)
+
+tdata <- FetchData(panc.cov2.bm, vars=c('ident','Condition')) %>% 
+  mutate(compare=paste0('C',ident,'-',Condition)) %>% dplyr::select('compare')
+
+panc.cov2.bm %<>% AddMetaData(tdata)
+
+plot <- DotPlot(subset(panc.cov2.bm, idents=c('C8-Mock','C8-COV2')), features=c('TNFSF12')) + 
+  coord_flip() + theme(axis.text.x=element_text(angle=45, hjust=1))
+ggsave(file.path(figdir, 'Fig.6C.png'), width=5, height=3.5, dpi=300)
+
+# Figure 6B: Dot plot showed the differential signaling from macrophages to β cells in human islets exposed to mock or CVB4 virus 
+cellchat.cvb4.merged <- readRDS(file.path(infodir, "cellchat.cvb4.merged.rds"))
+
+png(file.path(figdir, 'Fig.6B.png'), width=4, height=3.5, units='in', res=300)
+netVisual_bubble(cellchat.cvb4.merged, sources.use=c(7), targets.use = c(3),  comparison = c(1, 2), angle.x = 45, line.on=F)
+dev.off()

@@ -57,7 +57,7 @@ ggsave(file.path(figdir, 'Fig.4B.png'), width=7, height=5, plot=plot, dpi=300)
 plot <- myVolcanoPlot(tdefile=file.path(infodir, 'DE.C0-BM0.vs.C0-BUC.mincells_10.wilcox.min_pct_0.1.logfc_0.1.txt'), 
 	tx='p_val', ty='avg_logFC', tcutFC=0.25, tcutP=20, tlabel.genes.up=c('RPL13A','SMIM32'), tlabel.genes.down=c('AFP','GCG','ACTB','SST','PRSS2'), 
 	txlabel='LogFoldChange', tylabel='-LogP-value', tupper=300, talpha=0.8, tcolor.up='firebrick3', tcolor.down='steelblue3', tcolor.other='gray60')
-ggsave(file.path(figdir, 'Fig.4F.png'), width=7, height=5, plot=plot, dpi=300)
+ggsave(file.path(figdir, 'Fig.4E.png'), width=7, height=5, plot=plot, dpi=300)
 
 # Figure 4F: Dot plot analysis of β cell associated genes in β cell cluster of VMI organoids at day 7 after reaggregation and separately cultured cells as analyzed by scRNA-seq.
 gene.set.1 <- c("INS","PDX1","PAX6","HNF1B","PIK3CB","SLC2A1")
@@ -79,8 +79,34 @@ gene.set.2 <- c('INSR','VWF','PDGFB','EDN1','S1PR1','RSPO3')
 endo.BM0.BUC.cells <- rownames(FetchData(panc, vars=c('merged.cluster','Name')) %>% 
                                dplyr::filter(merge.clust.1 == 7 & Name %in% c('BM0','BUC')))
 
-g <- DotPlot(subset(panc, cells=endo.BM0.BUC.cells), features=gene.set.2, group.by='Name') + coord_flip()
+panc.endo.BM0.BUC <- subset(panc, cells=endo.BM0.BUC.cells)
+panc.endo.BM0.BUC$Name <- factor(panc.endo.BM0.BUC$Name, levels=c('BUC','BM0'))
+
+g <- DotPlot(panc.endo.BM0.BUC, features=gene.set.2, group.by='Name') + coord_flip()
 ggsave(file.path(figdir, 'Fig.4H.png'), width=5, height=4, dpi=300)
+
+# Figure 5F: Volcano plot of DE genes in the β cell cluster of VMI organoids at day 7 after reaggregation containing proinflammatory versus unstimulated macrophages as analyzed by scRNA-seq
+plot <- myVolcanoPlot(tdefile=file.path(infodir, 'DE.C0-BM1.vs.C0-BM0.mincells_10.wilcox.min_pct_0.1.logfc_0.1.txt'), 
+    tx='p_val', ty='avg_logFC', tcutFC=0.25, tcutP=20, tlabel.genes.up=c('RPL13A','SMIM32'), tlabel.genes.down=c('AFP','GCG','ACTB','SST','PRSS2'), 
+    txlabel='LogFoldChange', tylabel='-LogP-value', tupper=300, talpha=0.8, tcolor.up='firebrick3', tcolor.down='steelblue3', tcolor.other='gray60')
+ggsave(file.path(figdir, 'Fig.5F.png'), width=7, height=5, plot=plot, dpi=300)
+
+# Figure 5G: Dot plot analysis of β cell identity associated genes in the β cell cluster of VMI organoids at day 7 after reaggregation containing unstimulated or proinflammatory macrophages. 
+# extract cell IDs for beta cells from BM0 and BM1 samples
+beta.BM0.BM1.cells <- rownames(FetchData(panc, vars=c('merged.cluster','Name')) %>% 
+                               dplyr::filter(merged.cluster == 0 & Name %in% c('BM0','BM1')))
+
+panc.beta.BM0.BM1 <- subset(panc, cells=beta.BM0.BM1.cells)
+panc.beta.BM0.BM1$Name <- factor(panc.beta.BM0.BM1$Name, levels=c('BM0','BM1'))
+
+g <- DotPlot(panc.beta.BM0.BM1, features=gene.set.1, group.by='Name') + coord_flip()
+ggsave(file.path(figdir, 'Fig.5G.png'), width=5, height=5, dpi=300)
+
+# Figure 5H: Dot plot analysis of pyroptosis pathway associated genes in the β cell cluster of VMI organoids at day 7 after reaggregation containing unstimulated or proinflammatory macrophages. 
+gene.set.3 <- c('GSDMD','CASP1','IL18','PYCARD','STS')
+
+g <- DotPlot(panc.beta.BM0.BM1, features=gene.set.3, group.by='Name') + coord_flip()
+ggsave(file.path(figdir, 'Fig.5H.png'), width=5, height=4, dpi=300)
 
 # Figure 6A: Dot plot showed the differential signaling from macrophages to β cells in VMI organoids containing unstimulated or proinflammatory macrophages at day 7 after reaggregation.
 png(file.path(figdir, 'Fig.6A.png'), width=4, height=4.5, units='in', res=300)

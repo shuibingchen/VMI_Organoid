@@ -1,5 +1,5 @@
 # step_5.differential_expression.R
-# --- process scRNAseq data from islets samples ---
+# --- process scRNAseq data from VMI samples ---
 # step 5: perform differential expression analysis
 # Author: Tuo Zhang
 # Date: 8/1/2024
@@ -71,8 +71,8 @@ for (clust in 0:8){
 # get number of cells per group
 nCells <- FetchData(panc, vars=c('ident')) %>% dplyr::count(ident) %>% tidyr::complete(ident=all.groups, fill=list(n=0))
 
-# for each cluster, set up DE analysis
-for (clust in 0:8){
+# for beta cell cluster, set up DE analysis
+for (clust in c(0)){
     # BM0 v.s BUC
     my.DE.pair(panc, paste0('C',clust,'-BM0'), paste0('C',clust,'-BUC'), ntop=20, nCells=nCells,
                ttitle=paste0('C',clust,' co-culture M0 vs. un-coculture'), 

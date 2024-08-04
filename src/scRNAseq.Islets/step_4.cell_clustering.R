@@ -72,7 +72,7 @@ final.clust <- factor(final.clust, levels=0:8)
 panc[["final.clust"]] <- final.clust
 
 # set final clusters
-Idents(panc) <- final.clust
+Idents(panc) <- 'final.clust'
 
 # save seurat object
 saveRDS(panc, file=file.path(infodir, "panc.rds"))

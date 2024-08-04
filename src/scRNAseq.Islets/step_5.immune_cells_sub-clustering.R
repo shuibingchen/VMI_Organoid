@@ -137,3 +137,38 @@ Idents(panc.immune) <- final.clust
 
 # save Seurat object
 saveRDS(panc.immune, file.path(immune.infodir, 'panc.immune.rds'))
+
+# -------- merge immune cell sub-clusters back to the main Seurat object -------- #
+
+# rename immune cell sub-clusters, starting from 8
+immune.clusters.renamed <- FetchData(panc.immune, vars='ident') %>% rownames_to_column('cellID') %>% 
+  mutate(ident=as.character(as.numeric(as.vector(ident)) + 8))
+
+# merge sub-clusters into the main Seurat object; rename endothelial cluster (8) to 7
+combined.clusters <- FetchData(panc, vars='ident') %>% rownames_to_column('cellID') %>% 
+  mutate(ident=as.vector(ident)) %>% dplyr::filter(! cellID %in% immune.clusters.renamed$cellID) %>% 
+  mutate(ident=ifelse(ident == '8', '7', ident)) %>% 
+  dplyr::bind_rows(immune.clusters.renamed) %>% column_to_rownames('cellID') %>% 
+  dplyr::rename('combined.clust'='ident')
+
+combined.clusters$combined.clust <- factor(combined.clusters$combined.clust, levels=0:12)
+
+panc <- AddMetaData(panc, metadata=combined.clusters)
+
+Idents(panc) <- 'combined.clust'
+
+# C0 - beta cells
+# C1: alpha cells
+# C2: acinar cells
+# C3: ductal cells
+# C4: mesenchymal cells
+# C5: delta cells
+# C6: PP cells
+# C7: endothelial cells
+# C8: macrophages
+# C9: DC cells
+# C10: immune progenitor cells
+# C11: T cells
+# C12: B cells
+
+saveRDS(panc, file.path(infodir,'panc.combined_labels.rds'))
