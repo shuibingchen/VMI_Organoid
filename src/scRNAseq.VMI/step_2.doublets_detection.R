@@ -1,5 +1,5 @@
 # step_2.doublets_detection.R
-# --- process scRNAseq data from islets samples ---
+# --- process scRNAseq data from VMI samples ---
 # step 2: Identify doublets
 # Author: Tuo Zhang
 # Date: 8/1/2024

@@ -1,5 +1,5 @@
 # step2.sample_integration.R
-# --- process scRNAseq data from islets samples ---
+# --- process scRNAseq data from VMIamples ---
 # step 2: Integrate samples based on LSI
 # Author: Tuo Zhang
 # Date: 8/1/2024

@@ -1,5 +1,5 @@
 # step_3.sample_integration.R
-# --- process scRNAseq data from islets samples ---
+# --- process scRNAseq data from VMI samples ---
 # step 3: Integrate samples using MNN based corrections
 # Author: Tuo Zhang
 # Date: 8/1/2024

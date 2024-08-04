@@ -1,5 +1,5 @@
 # step_5.generate_plots.R
-# --- process scRNAseq data from islets samples ---
+# --- process scRNAseq data from VMI samples ---
 # step 5: Generate plots in the manuscript
 # Author: Tuo Zhang
 # Date: 8/1/2024

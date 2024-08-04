@@ -1,5 +1,5 @@
 # step4.coembed_ATAC_RNA.R
-# --- process scRNAseq data from islets samples ---
+# --- process scRNAseq data from VMI samples ---
 # step 4: Coembed scRNA-seq and scATAC-seq cells onto the same plot for visualization purpose
 # Author: Tuo Zhang
 # Date: 8/1/2024

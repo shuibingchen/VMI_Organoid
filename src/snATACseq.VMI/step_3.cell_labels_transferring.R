@@ -1,5 +1,5 @@
 # step3.cell_labels_transferring.R
-# --- process scRNAseq data from islets samples ---
+# --- process scRNAseq data from VMI samples ---
 # step 3: Annotate scATAC-seq cells by transferring cell labels from scRNA-seq
 # Author: Tuo Zhang
 # Date: 8/1/2024

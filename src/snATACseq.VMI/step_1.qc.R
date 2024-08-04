@@ -1,5 +1,5 @@
 # step_1.qc.R
-# --- process scRNAseq data from islets samples ---
+# --- process scRNAseq data from VMI samples ---
 # step 1: Load ATAC peak data and perform cell QC
 # Author: Tuo Zhang
 # Date: 8/1/2024

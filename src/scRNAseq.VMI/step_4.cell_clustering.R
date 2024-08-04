@@ -1,5 +1,5 @@
 # step_4.cell_clustering.R
-# --- process scRNAseq data from islets samples ---
+# --- process scRNAseq data from VMI samples ---
 # step 4: cluster cells and infer cell types
 # Author: Tuo Zhang
 # Date: 8/1/2024
